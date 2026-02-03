@@ -23,14 +23,14 @@ interface TeleconsultationDoctorCardProps {
   onBookTeleconsultation: (doctor: TeleconsultationDoctorCardProps['doctor']) => void;
 }
 
-export function TeleconsultationDoctorCard({ 
-  doctor, 
-  onEnterCode, 
-  onBookTeleconsultation 
+export function TeleconsultationDoctorCard({
+  doctor,
+  onEnterCode,
+  onBookTeleconsultation
 }: TeleconsultationDoctorCardProps) {
-  const initials = `${doctor.profile.first_name[0]}${doctor.profile.last_name[0]}`;
-  const fullName = `Dr. ${doctor.profile.first_name} ${doctor.profile.last_name}`;
-  
+  const initials = doctor.profile ? `${doctor.profile.first_name?.[0] || ''}${doctor.profile.last_name?.[0] || ''}` : 'Dr';
+  const fullName = doctor.profile ? `Dr. ${doctor.profile.first_name || ''} ${doctor.profile.last_name || ''}` : 'Médecin';
+
   const pricePerMinute = doctor.teleconsultation_price_per_minute || 0;
   const pricePerHour = doctor.teleconsultation_price_per_hour || 0;
   const isFree = doctor.is_teleconsultation_free;
@@ -45,7 +45,7 @@ export function TeleconsultationDoctorCard({
             <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
               <AvatarImage src={doctor.photo_url || undefined} alt={fullName} />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
-                {initials}
+                {initials || 'Dr'}
               </AvatarFallback>
             </Avatar>
             {/* Online status indicator */}
@@ -61,22 +61,22 @@ export function TeleconsultationDoctorCard({
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground truncate">{fullName}</h3>
             <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
-            
+
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                 <Video className="h-3 w-3 mr-1" />
                 En ligne
               </Badge>
-              
+
               {isFree ? (
                 <Badge className="bg-primary text-primary-foreground">
                   Gratuit
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-xs">
-                  {pricePerMinute > 0 
+                  {pricePerMinute > 0
                     ? `${pricePerMinute} FCFA/min`
-                    : pricePerHour > 0 
+                    : pricePerHour > 0
                       ? `${pricePerHour} FCFA/h`
                       : '100 FCFA/min'
                   }
@@ -88,17 +88,17 @@ export function TeleconsultationDoctorCard({
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="flex-1"
             onClick={() => onEnterCode(doctor.id)}
           >
             <Key className="h-4 w-4 mr-2" />
             Entrer un code
           </Button>
-          
+
           {isFree ? (
-            <Button 
+            <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
               onClick={() => onBookTeleconsultation(doctor)}
             >
@@ -106,7 +106,7 @@ export function TeleconsultationDoctorCard({
               Commencer
             </Button>
           ) : (
-            <Button 
+            <Button
               className="flex-1"
               onClick={() => onBookTeleconsultation(doctor)}
             >

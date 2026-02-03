@@ -11,6 +11,7 @@ import { PaymentHistory } from '@/components/patient/PaymentHistory';
 import { WaitingQueueCard } from '@/components/patient/WaitingQueueCard';
 import { AccessibilitySettings } from '@/components/patient/AccessibilitySettings';
 import { TeleconsultationView } from '@/components/teleconsultation/TeleconsultationView';
+import { useSidebar } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
@@ -55,6 +56,7 @@ interface Appointment {
 
 export default function PatientDashboard() {
   const { user, profile } = useAuth();
+  const { toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { notifications: realtimeNotifications, markAsRead, markAllAsRead, unreadCount } = useNotifications();
@@ -463,7 +465,7 @@ export default function PatientDashboard() {
       <PatientMobileHeader
         title="Mes RDV"
         unreadCount={unreadCount}
-        onMenuClick={() => { }}
+        onMenuClick={toggleSidebar}
         onNotificationsClick={() => setShowNotifications(true)}
       />
 

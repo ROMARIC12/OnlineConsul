@@ -24,10 +24,10 @@ interface TeleconsultationPaymentDialogProps {
     teleconsultation_price_per_minute?: number | null;
     teleconsultation_price_per_hour?: number | null;
     is_teleconsultation_free?: boolean;
-    profile: {
+    profile?: {
       first_name: string;
       last_name: string;
-    };
+    } | null;
   } | null;
   onStartFreeSession: (doctorId: string) => void;
   onPaymentSuccess?: (channelName: string, accessCode: string) => void;
@@ -61,8 +61,8 @@ export function TeleconsultationPaymentDialog({
 
   const pricePerMinute = doctor?.teleconsultation_price_per_minute || 100;
   const totalPrice = parseInt(duration) * pricePerMinute;
-  const fullName = doctor ? `Dr. ${doctor.profile.first_name} ${doctor.profile.last_name}` : '';
-  const initials = doctor ? `${doctor.profile.first_name[0]}${doctor.profile.last_name[0]}` : '';
+  const fullName = doctor?.profile ? `Dr. ${doctor.profile.first_name} ${doctor.profile.last_name}` : 'le praticien';
+  const initials = doctor?.profile ? `${doctor.profile.first_name?.[0] || ''}${doctor.profile.last_name?.[0] || ''}` : 'Dr';
 
   // Listen for payment confirmation via realtime
   useEffect(() => {

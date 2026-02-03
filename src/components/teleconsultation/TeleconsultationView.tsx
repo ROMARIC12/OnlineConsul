@@ -76,7 +76,7 @@ export function TeleconsultationView() {
         teleconsultation_price_per_hour: doc.teleconsultation_price_per_hour,
         teleconsultation_enabled: doc.teleconsultation_enabled,
         is_teleconsultation_free: doc.is_teleconsultation_free || false,
-        profile: doc.profile as { first_name: string; last_name: string }
+        profile: (doc.profile as { first_name: string; last_name: string }) || { first_name: 'Médecin', last_name: '' }
       }));
 
       setOnlineDoctors(doctors);
