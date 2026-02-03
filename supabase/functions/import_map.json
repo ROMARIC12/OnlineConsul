@@ -1,0 +1,6 @@
+{
+    "imports": {
+        "std/": "https://deno.land/std@0.168.0/",
+        "agora-token": "npm:agora-token@^2.0.3"
+    }
+}

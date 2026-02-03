@@ -1,0 +1,25 @@
+project_id = "mspthbyftwzqhpbjfeit"
+
+[functions.paystack-initialize]
+verify_jwt = false
+
+[functions.paystack-verify]
+verify_jwt = false
+
+[functions.cinetpay-initialize]
+verify_jwt = false
+
+[functions.cinetpay-verify]
+verify_jwt = false
+
+[functions.cinetpay-webhook]
+verify_jwt = false
+
+[functions.moneyfusion-initialize]
+verify_jwt = false
+
+[functions.moneyfusion-webhook]
+verify_jwt = false
+
+[functions.moneyfusion-verify]
+verify_jwt = false
