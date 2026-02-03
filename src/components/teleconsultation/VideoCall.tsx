@@ -37,8 +37,26 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
                 setClient(agoraClient);
 
                 // Add event listeners
-                agoraClient.on("user-published", handleUserPublished);
-                agoraClient.on("user-unpublished", handleUserUnpublished);
+                agoraClient.on("user-published", async (user: IRemoteUser, mediaType: 'video' | 'audio') => {
+                    await agoraClient.subscribe(user, mediaType);
+                    console.log(`Subscribed to remote ${mediaType} from user:`, user.uid);
+
+                    if (mediaType === 'video') {
+                        setRemoteUsers(prev => {
+                            if (prev.find(u => u.uid === user.uid)) return prev;
+                            return [...prev, user];
+                        });
+                    }
+
+                    if (mediaType === 'audio') {
+                        user.audioTrack?.play();
+                    }
+                });
+
+                agoraClient.on("user-unpublished", (user: IRemoteUser) => {
+                    console.log("Remote user unpublished:", user.uid);
+                    setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
+                });
 
                 // Join channel
                 const currentUid = await agoraClient.join(appId, channelName, token, uid || null);
@@ -86,27 +104,6 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
             leaveCall(agoraClient);
         };
     }, [appId, channelName, token, uid]);
-
-    const handleUserPublished = async (user: IRemoteUser, mediaType: 'video' | 'audio') => {
-        if (client) {
-            await client.subscribe(user, mediaType);
-
-            if (mediaType === 'video') {
-                setRemoteUsers(prev => {
-                    if (prev.find(u => u.uid === user.uid)) return prev;
-                    return [...prev, user];
-                });
-            }
-
-            if (mediaType === 'audio') {
-                user.audioTrack?.play();
-            }
-        }
-    };
-
-    const handleUserUnpublished = (user: IRemoteUser) => {
-        setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
-    };
 
     const leaveCall = async (agoraClient?: IAgoraRTCClient | null) => {
         const activeClient = agoraClient || client;
@@ -225,6 +222,13 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
             <style>{`
         .mirror-view video {
           transform: scaleX(-1);
+        }
+        .agora_video_player {
+          object-fit: cover !important;
+        }
+        div[id^="local-player"] > div, 
+        div[class*="remote-player"] > div {
+          background-color: black !important;
         }
       `}</style>
         </div>

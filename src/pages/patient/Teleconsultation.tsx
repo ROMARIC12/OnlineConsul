@@ -286,7 +286,7 @@ export default function Teleconsultation() {
                 },
                 body: JSON.stringify({
                     channelName: channel,
-                    role: role === 'doctor' ? 'publisher' : 'audience'
+                    role: 'publisher'
                 })
             });
 

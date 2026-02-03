@@ -120,7 +120,7 @@ export function TeleconsultationView() {
       const { data, error } = await supabase.functions.invoke('agora-token', {
         body: {
           channelName: sessionData.channelName,
-          role: 'audience'
+          role: 'publisher'
         }
       });
 
@@ -290,7 +290,7 @@ export function TeleconsultationView() {
             const { data, error } = await supabase.functions.invoke('agora-token', {
               body: {
                 channelName: channelName,
-                role: 'audience' // Patient joins as audience usually
+                role: 'publisher'
               }
             });
 
