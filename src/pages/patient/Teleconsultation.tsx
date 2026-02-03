@@ -73,6 +73,9 @@ export default function Teleconsultation() {
                 .channel('public:teleconsultation_sessions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'teleconsultation_sessions' }, (payload) => {
                     fetchPendingSessions();
+                    if (payload.eventType === 'INSERT') {
+                        toast.success("Un nouveau patient vient de rejoindre la salle d'attente.");
+                    }
                 })
                 .subscribe();
 

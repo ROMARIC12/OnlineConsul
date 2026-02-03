@@ -146,8 +146,34 @@ export function TeleconsultationView() {
 
   const handleStartFreeSession = async (doctorId: string) => {
     try {
-      const channelName = `free-${doctorId}-${Date.now()}`;
+      // 1. Get patient ID if not already known
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('profile_id', user?.id)
+        .single();
 
+      if (patientError || !patientData) {
+        throw new Error("Profil patient non trouvé");
+      }
+
+      const channelName = `free-${doctorId}-${Date.now()}`;
+      const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // 2. Create session in DB so doctor can see and join
+      const { error: sessionError } = await supabase
+        .from('teleconsultation_sessions')
+        .insert({
+          doctor_id: doctorId,
+          patient_id: patientData.id,
+          channel_name: channelName,
+          access_code: accessCode,
+          status: 'pending' // 'pending' status is visible to doctors
+        });
+
+      if (sessionError) throw sessionError;
+
+      // 3. Get Agora token
       const { data, error } = await supabase.functions.invoke('agora-token', {
         body: {
           channelName,
@@ -168,7 +194,7 @@ export function TeleconsultationView() {
 
       toast({
         title: 'Session démarrée',
-        description: 'Vous êtes maintenant en téléconsultation gratuite.',
+        description: `Vous êtes en consultation avec le code ${accessCode}.`,
       });
     } catch (error) {
       console.error('Error starting free session:', error);

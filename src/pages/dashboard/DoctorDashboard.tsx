@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Users, TrendingUp, Clock, AlertTriangle, CheckCircle, Bell, FileText, Lock, Settings, UserX, ChevronDown, Video } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Clock, AlertTriangle, CheckCircle, Bell, FileText, Lock, Settings, UserX, ChevronDown, Video, RefreshCw } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -164,7 +164,7 @@ export default function DoctorDashboard() {
         .from('doctor_statistics')
         .select('*')
         .eq('doctor_id', doctorData.id)
-        .single();
+        .maybeSingle();
 
       // Count pending confirmations
       const { count: pendingCount } = await supabase
@@ -245,8 +245,17 @@ export default function DoctorDashboard() {
     table: 'teleconsultation_sessions',
     filter: doctorId ? 'doctor_id' : undefined,
     filterValue: doctorId || undefined,
-    onChange: () => {
+    onChange: (payload) => {
+      console.log('[Doctor] Teleconsultation session update:', payload);
       fetchDoctorData();
+
+      if (payload.eventType === 'INSERT') {
+        toast({
+          title: "Nouvelle téléconsultation",
+          description: "Un patient vient de rejoindre la salle d'attente vidéo.",
+          variant: "default",
+        });
+      }
     },
   });
 
@@ -617,9 +626,14 @@ export default function DoctorDashboard() {
                 {/* Waiting Patients for Teleconsultation */}
                 <Card className="border-primary/50 shadow-md">
                   <CardHeader className="bg-primary/5 pb-3">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                      <Video className="h-4 w-4 text-primary" />
-                      Patients en attente (Vidéo)
+                    <CardTitle className="text-sm font-bold flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4 text-primary" />
+                        Patients en attente (Vidéo)
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={fetchDoctorData}>
+                        <RefreshCw className="h-3 w-3" />
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">

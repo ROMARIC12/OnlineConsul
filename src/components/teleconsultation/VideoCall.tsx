@@ -27,8 +27,17 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
 
     const localPlayerRef = useRef<HTMLDivElement>(null);
 
+    // Play local video track when available
     useEffect(() => {
-        if (!token) return; // Wait for token to be available
+        if (localVideoTrack && localPlayerRef.current && cameraOn) {
+            localVideoTrack.play(localPlayerRef.current);
+        } else if (localVideoTrack) {
+            localVideoTrack.stop();
+        }
+    }, [localVideoTrack, cameraOn]);
+
+    useEffect(() => {
+        if (!token) return;
         let agoraClient: IAgoraRTCClient;
 
         const setupAgora = async () => {
@@ -36,64 +45,47 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
                 agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                 setClient(agoraClient);
 
-                // Add event listeners
                 agoraClient.on("user-published", async (user: IRemoteUser, mediaType: 'video' | 'audio') => {
                     await agoraClient.subscribe(user, mediaType);
-                    console.log(`Subscribed to remote ${mediaType} from user:`, user.uid);
-
                     if (mediaType === 'video') {
                         setRemoteUsers(prev => {
                             if (prev.find(u => u.uid === user.uid)) return prev;
                             return [...prev, user];
                         });
                     }
-
                     if (mediaType === 'audio') {
                         user.audioTrack?.play();
                     }
                 });
 
                 agoraClient.on("user-unpublished", (user: IRemoteUser) => {
-                    console.log("Remote user unpublished:", user.uid);
                     setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
                 });
 
-                // Join channel
-                const currentUid = await agoraClient.join(appId, channelName, token, uid || null);
-                console.log("Joined channel with UID:", currentUid);
+                await agoraClient.join(appId, channelName, token, uid || null);
 
-                // Create local tracks independently
-                let audioTrack: IMicrophoneAudioTrack | null = null;
-                let videoTrack: ICameraVideoTrack | null = null;
-
+                // Setup audio
                 try {
-                    audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                    const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
                     setLocalAudioTrack(audioTrack);
                     await agoraClient.publish(audioTrack);
-                    console.log("Published local audio track");
                 } catch (e) {
-                    console.warn("Microphone not found or blocked:", e);
-                    toast.warning("Microphone non détecté ou bloqué. Vous serez en sourdine.");
+                    console.warn("Mic error:", e);
                 }
 
+                // Setup video
                 try {
-                    videoTrack = await AgoraRTC.createCameraVideoTrack();
+                    const videoTrack = await AgoraRTC.createCameraVideoTrack();
                     setLocalVideoTrack(videoTrack);
-                    // Play local video
-                    if (localPlayerRef.current) {
-                        videoTrack.play(localPlayerRef.current);
-                    }
                     await agoraClient.publish(videoTrack);
-                    console.log("Published local video track");
                 } catch (e) {
-                    console.warn("Camera not found or blocked:", e);
-                    toast.warning("Caméra non détectée ou bloquée. Votre vidéo ne sera pas diffusée.");
+                    console.warn("Camera error:", e);
                 }
 
                 setIsJoining(false);
             } catch (error) {
-                console.error("Agora Error:", error);
-                toast.error("Erreur lors de la connexion à la vidéoconférence");
+                console.error("Agora Setup Error:", error);
+                toast.error("Erreur de connexion vidéo");
                 onCallEnd();
             }
         };
@@ -101,13 +93,14 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
         setupAgora();
 
         return () => {
-            leaveCall(agoraClient);
+            if (agoraClient) {
+                agoraClient.leave();
+                agoraClient.removeAllListeners();
+            }
         };
     }, [appId, channelName, token, uid]);
 
-    const leaveCall = async (agoraClient?: IAgoraRTCClient | null) => {
-        const activeClient = agoraClient || client;
-
+    const leaveCall = async () => {
         if (localAudioTrack) {
             localAudioTrack.stop();
             localAudioTrack.close();
@@ -116,11 +109,9 @@ export function VideoCall({ appId, channelName, token, uid, duration, onCallEnd 
             localVideoTrack.stop();
             localVideoTrack.close();
         }
-
-        if (activeClient) {
-            await activeClient.leave();
+        if (client) {
+            await client.leave();
         }
-
         setRemoteUsers([]);
         onCallEnd();
     };
